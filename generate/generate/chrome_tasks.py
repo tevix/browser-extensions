@@ -104,6 +104,7 @@ More information on packaging Chrome extensions can be found here:
 	# We need a private key to package chrome extensions
 	crx_key = build.tool_config.get('chrome.profile.crx_key')
 	crx_key_path = build.tool_config.get('chrome.profile.crx_key_path')
+	crx_key_passphrase = build.tool_config.get('chrome.profile.crx_key_passphrase')
 
 	if not crx_key:
 		key_msg = """Packaging a Chrome extension requires a private key.
@@ -143,7 +144,7 @@ of the extension. Add the following to <app dir>/local_config.json to use the ke
 		zipf.close()
 
 	# Generate signature
-	signature, pubkey = _generate_signature(path.join(development_dir, crx_filename), crx_key_file)
+	signature, pubkey = _generate_signature(path.join(development_dir, crx_filename), crx_key_file, crx_key_passphrase)
 
 	# Combine magic, public key and signature into header and prepend to zip file
 	magic = 'Cr24'
@@ -162,16 +163,21 @@ of the extension. Add the following to <app dir>/local_config.json to use the ke
 	shutil.move(path.join(development_dir, crx_filename), path.join(release_dir, crx_filename))
 
 
-def _generate_signature(zip_file, key_file):
+def _generate_signature(zip_file, key_file, key_passphrase):
 	# Sign the zip file with the private key
-	openssl_sign = lib.PopenWithoutNewConsole(['openssl', 'sha1', '-binary', '-sign', key_file, zip_file], stdout=PIPE)
+	openssl_sign = lib.PopenWithoutNewConsole(['openssl', 'sha1', '-binary', '-passin', 'pass:' + key_passphrase, '-sign', key_file, zip_file], stdout=PIPE)
+	# openssl_sign = lib.PopenWithoutNewConsole(['openssl', 'sha1', '-binary', '-sign', key_file, zip_file], stdout=PIPE)
 	if openssl_sign.wait() != 0:
 		raise ChromeError("Problem signing Chrome package. openssl returned {}".format(openssl_sign.returncode))
 	signature = openssl_sign.stdout.read()
 
 	# Convert the public part of the PEM key to DER format for inclusion in the CRX header
+	# openssl_der = lib.PopenWithoutNewConsole(['openssl', 'rsa', '-pubout', '-inform', 'PEM', '-outform', 'DER', '-in',
+	#										 key_file], stdout=PIPE)
+	
 	openssl_der = lib.PopenWithoutNewConsole(['openssl', 'rsa', '-pubout', '-inform', 'PEM', '-outform', 'DER', '-in',
-											 key_file], stdout=PIPE)
+											 key_file, '-passin', 'pass:' + key_passphrase], stdout=PIPE)
+	
 	if openssl_der.wait() != 0:
 		raise ChromeError("Problem converting PEM key to DER. openssl returned {}".format(openssl_der.returncode))
 	pubkey = openssl_der.stdout.read()
