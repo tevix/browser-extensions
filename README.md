@@ -36,6 +36,7 @@ Dependencies
       C:\Python27;C:\Python27\Scripts
 
 * Python setuptools: [https://pypi.python.org/pypi/setuptools/1.0#windows](https://pypi.python.org/pypi/setuptools/1.0#windows)
+* Location of ez_setup.py is wrong on previous link, correct link: [https://bootstrap.pypa.io/ez_setup.py](https://bootstrap.pypa.io/ez_setup.py)
 * Python dependencies: `easy_install pip virtualenv`
 * Mercurial: [http://mercurial.selenic.com](http://mercurial.selenic.com)
 * Git: [http://git-scm.com/download/win](http://git-scm.com/download/win) (Choose "Run Git from the Windows Command Prompt option!)
